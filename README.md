@@ -18,4 +18,3 @@ Proyecto realizado en Docker para facilitar ejecución y portabilidad
 | `docker-compose exec backend {comando}`      | `dce backend {comando}`  | Ejecuta cualquier comando dentro de un contenedor en particular                                  |
 | `docker-compose run backend {comando}`       | `dcr backend {comando}`  | Ejecuta cualquier comando dentro de un contenedor y lo inicia automáticamente                    |
 
-
