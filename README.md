@@ -1,10 +1,12 @@
 # Consideraciones
-Proyecto realizado en Docker para facilitar ejecución y portabilidad
+Proyecto realizado en Docker para facilitar la ejecución y portabilidad.
 
-- Se requiere que Docker esté instalado en su version >= 28
-- Se deja para facilitar la revisión archivos de configuración y variables (no considerar esto para proyectos reales o en entornos productivos).
+- **Requisito:** Docker instalado (versión >= 28).
+- **Nota:** Los archivos de configuración y variables se incluyen solo para facilitar la revisión. **No** los uses en proyectos reales o entornos productivos.
 
-# Comandos útiles para ejecución del proyecto
+---
+
+## Comandos útiles para la ejecución del proyecto
 
 | Comando                                      | Alias                    | Descripción                                                                                      |
 |----------------------------------------------|--------------------------|--------------------------------------------------------------------------------------------------|
@@ -17,3 +19,10 @@ Proyecto realizado en Docker para facilitar ejecución y portabilidad
 | `docker-compose exec backend rails c`        | `dce backend rails c`    | Abre la consola de Rails dentro del contenedor                                                   |
 | `docker-compose exec backend {comando}`      | `dce backend {comando}`  | Ejecuta cualquier comando dentro de un contenedor en particular                                  |
 | `docker-compose run backend {comando}`       | `dcr backend {comando}`  | Ejecuta cualquier comando dentro de un contenedor y lo inicia automáticamente                    |
+
+## Ejecución y observación de simulación
+Para ejecutar la simulación, utiliza el siguiente comando en tu terminal:
+
+```sh
+docker-compose run --rm backend bundle exec rails runner simulate_device_activity.rb
+```

@@ -208,5 +208,3 @@ queue_device_update(device_prt_ant_001, payload_printer_001_maintenance)
 
 
 puts "\n--- Database Seeding Complete! ---"
-puts "Remember to run Sidekiq in a separate process for the simulated jobs to execute."
-puts "Check http://localhost:3000/sidekiq for job status."

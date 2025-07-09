@@ -48,3 +48,4 @@ end
 
 gem 'sidekiq'
 gem 'redis'
+gem 'faker'
