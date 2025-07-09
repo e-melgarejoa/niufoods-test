@@ -17,6 +17,10 @@ class Device < ApplicationRecord
   private
 
   def create_device_update_record
-    DeviceUpdate.find_or_create_by(device: self)
+    DeviceUpdate.create!(
+      device: self,
+      last_update_status: :in_progress,
+      operational_status: :unknown
+    )
   end
 end
