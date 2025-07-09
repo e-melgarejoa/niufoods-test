@@ -1,27 +1,26 @@
-
 require 'faker'
 require 'json'
 require 'time'
+require 'httparty' # Permite hacer peticiones HTTP POST a la API
 
-# Cargar el entorno de Rails si no estamos ya en un runner
+# Carga el entorno de Rails si el script no se ejecuta con `rails runner`
 unless defined?(Rails)
-  puts "Loading Rails environment..."
   require File.expand_path('../config/environment', __dir__)
-  puts "Rails environment loaded."
 end
 
-# --- INICIO DEL BLOQUE 'begin' QUE ENVUELVE EL CÓDIGO PRINCIPAL ---
-begin # <--- ¡Añadir este 'begin' aquí!
+begin
+  puts "--- Iniciando Simulación de Actividad de Dispositivos ---"
 
-  puts "--- Starting Device Activity Simulation ---"
+  # URL base de tu API de Rails (ajusta si es necesario)
+  BASE_API_URL = "http://localhost:3000"
 
-  # Intervalo de tiempo máximo entre interacciones de un dispositivo (en segundos)
+  # Intervalo de tiempo máximo entre interacciones por dispositivo (en segundos)
   MAX_INTERACTION_INTERVAL = 300 # 5 minutos
 
-  # Probabilidad de que una interacción termine en un error simulado (0.0 a 1.0)
+  # Probabilidad de que una interacción simule un error (0.0 a 1.0)
   ERROR_PROBABILITY = 0.20 # 20% de probabilidad de error
 
-  # Probabilidad de simular diferentes estados operativos (debe sumar 1.0 para cada dispositivo)
+  # Probabilidades para los estados operativos simulados
   OPERATIONAL_STATUS_PROBABILITIES = {
     operative: 0.70,
     warning: 0.15,
@@ -30,7 +29,7 @@ begin # <--- ¡Añadir este 'begin' aquí!
     in_maintenance: 0.02
   }.freeze
 
-  # Genera un estado operativo aleatorio basado en las probabilidades
+  # Genera un estado operacional aleatorio basado en las probabilidades definidas
   def generate_random_operational_status
     rand_num = rand
     cumulative_probability = 0.0
@@ -41,7 +40,7 @@ begin # <--- ¡Añadir este 'begin' aquí!
     'unknown'
   end
 
-  # Simula un payload de datos de un dispositivo
+  # Genera un payload de datos de dispositivo simulado
   def generate_device_payload(device)
     payload = {
       "firmware_version": device.firmware_version,
@@ -52,6 +51,7 @@ begin # <--- ¡Añadir este 'begin' aquí!
       "sync_time": Time.current.iso8601
     }
 
+    # Añade datos específicos según el tipo de dispositivo
     case device.device_type.name
     when 'Kiosk'
       payload["screen_brightness"] = rand(50..100)
@@ -74,47 +74,61 @@ begin # <--- ¡Añadir este 'begin' aquí!
     payload
   end
 
+  # Envía datos del dispositivo a la API de Rails
   def send_device_data(device, local, is_error_case = false)
-    payload = generate_device_payload(device)
-    api_endpoint = '/api/v1/devices/update_status'
+    api_payload = {
+      device_uuid: device.uuid,
+      data: generate_device_payload(device)
+    }
+    
+    request_url = "#{BASE_API_URL}/api/v1/devices/update_status"
+    error_type_simulated = nil
 
     if is_error_case
       case rand(1..3)
       when 1
-        # Simular un payload malformado
-        payload.delete("operational_status") # Campo requerido faltante
-        payload["firmware_version"] = nil # Dato inválido
-        error_message = "Simulated: Invalid payload structure or missing critical data."
+        api_payload.delete(:data) # Simula payload malformado
+        api_payload[:invalid_data_key] = generate_device_payload(device)
+        error_type_simulated = "Payload malformado (clave 'data' faltante)"
       when 2
-        # Simular un error de autenticación/UUID desconocido
-        api_endpoint = '/api/v1/devices/non_existent_endpoint' # Endpoint incorrecto
-        error_message = "Simulated: Unauthorized access or incorrect endpoint."
+        api_payload[:device_uuid] = Faker::Internet.uuid # Simula UUID inexistente
+        error_type_simulated = "UUID inexistente"
       when 3
-        # Simular un error de servidor interno
-        payload["simulate_server_error"] = true # Un campo que tu worker podría interpretar como un error
-        error_message = "Simulated: Internal server error on processing."
+        api_payload[:data]["force_server_error"] = true # Simula error interno en el worker
+        error_type_simulated = "Error interno de servidor simulado"
       end
-      Rails.logger.warn "Simulating ERROR case for Device #{device.uuid}: #{error_message}"
+      Rails.logger.warn "Simulando CASO DE ERROR para Dispositivo #{device.uuid}: #{error_type_simulated}"
     end
 
     begin
-      # Crea el DeviceApiRequest que será procesado por el Sidekiq Worker
-      api_request = device.device_api_requests.create!(
-        request_payload: payload,
-        api_endpoint: api_endpoint,
-        status: :pending, # Se inicializa como 'pending'
-        sidekiq_job_id: SecureRandom.hex(12) # Simula un ID de Sidekiq
+      # Realiza la petición HTTP POST real a la API
+      response = HTTParty.post(
+        request_url,
+        body: api_payload.to_json,
+        headers: { 'Content-Type' => 'application/json' }
       )
-      puts "  [#{Time.current.strftime('%H:%M:%S')}] Device #{device.uuid} (#{device.device_type.name}) at #{local.name} sent data. API Request ID: #{api_request.id} (Error: #{is_error_case})"
 
-      # Encola el trabajo de Sidekiq para procesar esta solicitud API
-      DeviceUpdateJob.perform_async(api_request.id)
+      response_body = JSON.parse(response.body) rescue { message: response.body }
+      
+      if response.success?
+        puts "  [#{Time.current.strftime('%H:%M:%S')}] ✅ Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} envió datos. Estado HTTP: #{response.code}. Respuesta API: #{response_body['message']}. ID de Solicitud: #{response_body['request_id']}"
+      else
+        puts "  [#{Time.current.strftime('%H:%M:%S')}] ❌ Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ al enviar datos. Estado HTTP: #{response.code}. Error API: #{response_body['error']}. Tipo de Error Simulado: #{error_type_simulated}"
+      end
 
-    rescue ActiveRecord::RecordInvalid => e
-      Rails.logger.error "Failed to create DeviceApiRequest for device #{device.uuid}: #{e.message}"
+    rescue HTTParty::Error => e
+      Rails.logger.error "Error HTTParty al enviar datos para dispositivo #{device.uuid}: #{e.message}"
+      puts "  [#{Time.current.strftime('%H:%M:%S')}] ❌ Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ debido a error de red/HTTP: #{e.message}"
+    rescue JSON::ParserError
+      Rails.logger.error "Error de parseo JSON para dispositivo #{device.uuid}. Cuerpo de respuesta: #{response.body}"
+      puts "  [#{Time.current.strftime('%H:%M:%S')}] ❌ Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ: Respuesta JSON inválida."
+    rescue StandardError => e
+      Rails.logger.error "Error inesperado al enviar datos para dispositivo #{device.uuid}: #{e.message}"
+      puts "  [#{Time.current.strftime('%H:%M:%S')}] ❌ Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ debido a error inesperado: #{e.message}"
     end
   end
 
+  # Recupera todos los dispositivos y sus locales asignados
   all_devices_with_locals = Device.includes(:device_type, local_devices: :local)
                                   .map do |device|
                                     current_local_device = device.local_devices.find_by(is_current: true)
@@ -122,32 +136,30 @@ begin # <--- ¡Añadir este 'begin' aquí!
                                   end.compact
 
   if all_devices_with_locals.empty?
-    puts "No active devices found in locals to simulate activity. Please run `rails db:seed` first."
+    puts "No se encontraron dispositivos activos en locales para simular actividad. Por favor, ejecuta `rails db:seed` primero."
     exit 0
   end
 
-  puts "\nStarting simulation for #{all_devices_with_locals.count} devices..."
-  puts "Press Ctrl+C to stop the simulation."
+  puts "\nIniciando simulación para #{all_devices_with_locals.count} dispositivos..."
+  puts "Conectando a la API en: #{BASE_API_URL}"
+  puts "Presiona Ctrl+C para detener la simulación."
 
-  # Bucle infinito para simular actividad continua
+  # Bucle infinito para simular actividad continua de los dispositivos
   loop do
     all_devices_with_locals.each do |device, local|
-      # Simular un intervalo irregular para cada dispositivo
       sleep_time = rand(1..MAX_INTERACTION_INTERVAL)
-      puts "  Next update for #{device.uuid} in #{sleep_time} seconds..."
+      puts "  Próxima actualización para #{device.uuid} en #{sleep_time} segundos..."
       sleep sleep_time
 
-      # Decidir si esta interacción será un caso de error o éxito
       is_error = rand < ERROR_PROBABILITY
-
       send_device_data(device, local, is_error)
     end
   end
 
 rescue Interrupt
-  puts "\n--- Device Activity Simulation Stopped ---"
+  puts "\n--- Simulación de Actividad de Dispositivos Detenida ---"
 rescue StandardError => e
-  Rails.logger.error "Simulation script error: #{e.message}"
+  Rails.logger.error "Error en el script de simulación: #{e.message}"
   Rails.logger.error e.backtrace.join("\n")
-  puts "Simulation script encountered an error. Check logs."
-end # <--- ¡Cierra el 'begin' aquí!
+  puts "El script de simulación encontró un error. Revisa los logs."
+end
