@@ -111,20 +111,20 @@ begin
       response_body = JSON.parse(response.body) rescue { message: response.body }
       
       if response.success?
-        puts "  [#{Time.current.strftime('%H:%M:%S')}] ✅ Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} envió datos. Estado HTTP: #{response.code}. Respuesta API: #{response_body['message']}. ID de Solicitud: #{response_body['request_id']}"
+        puts "  [#{Time.current.strftime('%H:%M:%S')}] Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} envió datos. Estado HTTP: #{response.code}. Respuesta API: #{response_body['message']}. ID de Solicitud: #{response_body['request_id']}"
       else
-        puts "  [#{Time.current.strftime('%H:%M:%S')}] ❌ Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ al enviar datos. Estado HTTP: #{response.code}. Error API: #{response_body['error']}. Tipo de Error Simulado: #{error_type_simulated}"
+        puts "  [#{Time.current.strftime('%H:%M:%S')}] Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ al enviar datos. Estado HTTP: #{response.code}. Error API: #{response_body['error']}. Tipo de Error Simulado: #{error_type_simulated}"
       end
 
     rescue HTTParty::Error => e
       Rails.logger.error "Error HTTParty al enviar datos para dispositivo #{device.uuid}: #{e.message}"
-      puts "  [#{Time.current.strftime('%H:%M:%S')}] ❌ Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ debido a error de red/HTTP: #{e.message}"
+      puts "  [#{Time.current.strftime('%H:%M:%S')}] Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ debido a error de red/HTTP: #{e.message}"
     rescue JSON::ParserError
       Rails.logger.error "Error de parseo JSON para dispositivo #{device.uuid}. Cuerpo de respuesta: #{response.body}"
-      puts "  [#{Time.current.strftime('%H:%M:%S')}] ❌ Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ: Respuesta JSON inválida."
+      puts "  [#{Time.current.strftime('%H:%M:%S')}] Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ: Respuesta JSON inválida."
     rescue StandardError => e
       Rails.logger.error "Error inesperado al enviar datos para dispositivo #{device.uuid}: #{e.message}"
-      puts "  [#{Time.current.strftime('%H:%M:%S')}] ❌ Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ debido a error inesperado: #{e.message}"
+      puts "  [#{Time.current.strftime('%H:%M:%S')}] Dispositivo #{device.uuid} (#{device.device_type.name}) en #{local.name} FALLÓ debido a error inesperado: #{e.message}"
     end
   end
 
