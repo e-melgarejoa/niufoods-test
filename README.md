@@ -6,7 +6,6 @@ Este proyecto simula un sistema de monitoreo de dispositivos distribuidos en dif
 
 - **Backend (API central):** Aplicación Rails que expone endpoints para recibir y consultar el estado de los dispositivos.
 - **Simulador de Dispositivos:** Script que emula la actividad y los estados de los dispositivos, enviando datos periódicamente a la API.
-- **Cliente (opcional):** Interfaz para visualizar el estado de los locales y dispositivos (si está implementada).
 
 Todo el entorno se ejecuta en contenedores Docker para asegurar portabilidad y facilidad de despliegue.
 
@@ -48,7 +47,6 @@ flowchart TD
 
 - Cada dispositivo simulado genera eventos de estado y los envía mediante peticiones HTTP a la API central.
 - La API central almacena y procesa los estados recibidos.
-- El cliente (opcional) consulta la API para mostrar el estado actualizado de los dispositivos y locales.
 
 ---
 
@@ -94,12 +92,6 @@ flowchart TD
      ```
      Esto iniciará el script que simula la actividad de los dispositivos y enviará los datos a la API.
 
-5. **(Opcional) Iniciar el cliente**
-     - Si existe una interfaz cliente, puedes iniciarla con:
-         ```sh
-         docker-compose up client
-         ```
-
 ---
 
 ## Comandos Útiles
@@ -109,7 +101,6 @@ flowchart TD
 | `docker-compose up`                          | `dcup`                   | Inicia el entorno de desarrollo (todos los servicios)                                            |
 | `docker-compose stop`                        | `dcstop`                 | Detiene el entorno de desarrollo (todos los servicios)                                           |
 | `docker-compose up backend`                  | `dcup backend`           | Inicia solo el backend (API)                                                                     |
-| `docker-compose up backend client`           | `dcup backend client`    | Inicia tanto el backend como el cliente                                                          |
 | `docker-compose ps`                          | `dcps`                   | Muestra el estado de los contenedores en ejecución                                               |
 | `docker-compose exec backend bash`           | `dce backend bash`       | Abre una terminal dentro del contenedor                                                          |
 | `docker-compose exec backend rails c`        | `dce backend rails c`    | Abre la consola de Rails dentro del contenedor                                                   |
