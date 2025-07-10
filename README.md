@@ -11,6 +11,97 @@ Todo el entorno se ejecuta en contenedores Docker para asegurar portabilidad y f
 
 ---
 
+## Modelo de Base de Datos
+
+```mermaid
+erDiagram
+    DeviceType ||--o{ Device : "has"
+    Device ||--o{ DeviceApiRequest : "has"
+    Device ||--o| DeviceUpdate : "has"
+    Local ||--o{ LocalDevice : "has"
+    Device ||--o{ LocalDevice : "has"
+    DeviceApiRequest ||--o| DeviceUpdate : "referenced by successful"
+    DeviceApiRequest ||--o| DeviceUpdate : "referenced by failed"
+
+    DeviceType {
+        bigint id PK
+        string name "UK, not null"
+        text description
+        boolean active "default: true, not null"
+        datetime created_at
+        datetime updated_at
+    }
+
+    Device {
+        bigint id PK
+        bigint device_type_id FK "not null"
+        string uuid "UK, not null"
+        string name
+        string manufacturer
+        string model
+        string serial_number "UK, not null, unique where not null"
+        datetime last_connection_at
+        boolean active
+        datetime created_at
+        datetime updated_at
+    }
+
+    DeviceApiRequest {
+        bigint id PK
+        bigint device_id FK "not null"
+        string sidekiq_job_id "UK, not null, unique where not null"
+        integer status "default: 0, not null (pending, processing, completed, failed)"
+        jsonb request_payload
+        string api_endpoint
+        datetime processed_at
+        datetime completed_at
+        text error_message
+        text stack_trace
+        integer retries_count "default: 0, not null"
+        datetime created_at
+        datetime updated_at
+    }
+
+    DeviceUpdate {
+        bigint id PK
+        bigint device_id FK "not null"
+        integer last_update_status "default: 1, not null (pending, in_progress, success, failed)"
+        integer operational_status "default: 0, not null (unknown, operative, warning, trouble, failing, in_maintenance)"
+        datetime last_updated_at
+        datetime last_sync_time
+        string current_firmware_version
+        string desired_firmware_version
+        bigint last_successful_request_id FK
+        bigint last_failed_request_id FK
+        text last_error_message
+        datetime created_at
+        datetime updated_at
+    }
+
+    Local {
+        bigint id PK
+        string name "UK, not null"
+        string address
+        string city
+        string region
+        datetime created_at
+        datetime updated_at
+        integer operational_status "default: 0 (unknown, operative, warning, trouble, failing, in_maintenance)"
+    }
+
+    LocalDevice {
+        bigint id PK
+        bigint local_id FK "not null"
+        bigint device_id FK "not null"
+        datetime assigned_from
+        datetime assigned_until
+        boolean is_current "unique on (device_id, is_current) where is_current is true"
+        datetime created_at
+        datetime updated_at
+    }
+```
+---
+
 ## Lógica de Actualización de Estados y Mantenimiento
 
 La lógica del negocio implementada en los modelos de la aplicación Rails asegura que las actualizaciones de estado de los dispositivos y la gestión de los registros de mantenimiento se reflejen correctamente en el sistema:
