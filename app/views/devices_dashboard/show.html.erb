@@ -1,0 +1,123 @@
+<%# app/views/devices_dashboard/show.html.erb %>
+
+<h1 class="mb-4">Detalles del Dispositivo: <%= @device.name || @device.uuid %></h1>
+
+<p><%= link_to '← Volver al Dashboard', devices_dashboard_path, class: "btn btn-secondary mb-3" %></p>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Información General</h2>
+  </div>
+  <div class="card-body">
+    <ul class="list-unstyled">
+      <li><strong>UUID:</strong> <%= @device.uuid %></li>
+      <li><strong>Nombre:</strong> <%= @device.name || 'N/A' %></li>
+      <li><strong>Tipo de Dispositivo:</strong> <%= @device.device_type&.name || 'N/A' %></li>
+      <li><strong>Fabricante:</strong> <%= @device.manufacturer || 'N/A' %></li>
+      <li><strong>Modelo:</strong> <%= @device.model || 'N/A' %></li>
+      <li><strong>Número de Serie:</strong> <%= @device.serial_number || 'N/A' %></li>
+      <li><strong>Última Conexión:</strong> <%= @device.last_connection_at&.strftime("%Y-%m-%d %H:%M:%S") || 'Nunca' %></li>
+      <li><strong>Activo:</strong> <%= @device.active ? 'Sí' : 'No' %></li>
+      <li><strong>Local Asignado Actualmente:</strong>
+        <% current_local_device = @device.local_devices.find { |ld| ld.is_current } %>
+        <%= current_local_device&.local&.name || 'No Asignado' %>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Estado y Actualizaciones</h2>
+  </div>
+  <div class="card-body">
+    <% if @device.device_update %>
+      <ul class="list-unstyled">
+        <li><strong>Estado Operacional:</strong>
+          <% status_class = case @device.device_update.operational_status
+                           when 'operative' then 'text-success'
+                           when 'warning' then 'text-warning'
+                           when 'trouble', 'failing' then 'text-danger'
+                           when 'in_maintenance' then 'text-primary'
+                           else 'text-muted'
+                           end %>
+          <span class="fw-bold <%= status_class %>">
+            <%= @device.device_update.operational_status&.humanize %>
+          </span>
+        </li>
+        <li><strong>Versión de Firmware Actual:</strong> <%= @device.device_update.current_firmware_version || 'N/A' %></li>
+        <li><strong>Versión de Firmware Deseada:</strong> <%= @device.device_update.desired_firmware_version || 'N/A' %></li>
+        <li><strong>Último Estado de Actualización:</strong> <%= @device.device_update.last_update_status&.humanize || 'N/A' %></li>
+        <li><strong>Última Sincronización (Reportada):</strong> <%= @device.device_update.last_sync_time&.strftime("%Y-%m-%d %H:%M:%S") || 'Nunca' %></li>
+        <li><strong>Actualización del Registro (Local):</strong> <%= @device.device_update.last_updated_at&.strftime("%Y-%m-%d %H:%M:%S") || 'Nunca' %></li>
+        <li><strong>Último Error Reportado:</strong> <%= @device.device_update.last_error_message || 'N/A' %></li>
+        <li><strong>Última Solicitud Exitosa:</strong>
+          <% if @device.device_update.last_successful_request %>
+            ID: <%= @device.device_update.last_successful_request.id %> (Endpoint: <%= @device.device_update.last_successful_request.api_endpoint %>)
+          <% else %>
+            N/A
+          <% end %>
+        </li>
+        <li><strong>Última Solicitud Fallida:</strong>
+          <% if @device.device_update.last_failed_request %>
+            ID: <%= @device.device_update.last_failed_request.id %> (Mensaje: <%= @device.device_update.last_failed_request.error_message&.truncate(100) || 'N/A' %>)
+          <% else %>
+            N/A
+          <% end %>
+        </li>
+      </ul>
+    <% else %>
+      <p class="text-muted">No hay información de actualización disponible para este dispositivo.</p>
+    <% end %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Últimas 10 Solicitudes API (DeviceApiRequests)</h2>
+  </div>
+  <div class="card-body">
+    <% if @recent_api_requests.any? %>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover table-bordered">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Estado</th>
+              <th>Endpoint</th>
+              <th>Payload Recibido</th>
+              <th>Mensaje de Error</th>
+              <th>Creado En</th>
+              <th>Procesado En</th>
+              <th>Completado En</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @recent_api_requests.each do |req| %>
+              <tr>
+                <td><%= req.id %></td>
+                <td><%= req.status&.humanize || 'N/A' %></td>
+                <td><%= req.api_endpoint || 'N/A' %></td>
+                <td>
+                  <% if req.request_payload.present? %>
+                    <pre class="bg-light p-2 rounded" style="white-space: pre-wrap; word-break: break-all; max-height: 150px; overflow-y: auto; font-size: 0.85em;"><%= JSON.pretty_generate(req.request_payload) %></pre>
+                  <% else %>
+                    N/A
+                  <% end %>
+                </td>
+                <td><%= req.error_message&.truncate(150) || 'N/A' %></td>
+                <td><%= req.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+                <td><%= req.processed_at&.strftime("%Y-%m-%d %H:%M:%S") || 'Pendiente' %></td>
+                <td><%= req.completed_at&.strftime("%Y-%m-%d %H:%M:%S") || 'No completado' %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="alert alert-info" role="alert">
+        No hay solicitudes API recientes para mostrar para este dispositivo.
+      </div>
+    <% end %>
+  </div>
+</div>

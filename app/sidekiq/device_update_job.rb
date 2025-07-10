@@ -29,6 +29,8 @@ class DeviceUpdateJob
       last_error_message: nil
     )
 
+    local = device.local_devices.find_by(is_current: true)&.local
+
     begin
       # Simular la llamada a la API del dispositivo
       # {
@@ -89,6 +91,13 @@ class DeviceUpdateJob
         stack_trace: e.backtrace.join("\n")
       )
       raise
+    ensure
+      if local.present?
+        Rails.logger.info "DeviceUpdateJob: Updating operational status for Local '#{local.name}' (ID: #{local.id})."
+        local.update_operational_status! # Llama al método para actualizar el estado del local
+      else
+        Rails.logger.warn "DeviceUpdateJob: Device #{device.uuid} is not currently assigned to any Local. Skipping local status update."
+      end  
     end
   end
 end

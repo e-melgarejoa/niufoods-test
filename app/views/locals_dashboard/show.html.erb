@@ -1,0 +1,93 @@
+<h1 class="mb-4">Detalles del Local: <%= @local.name %></h1>
+
+<p class="lead">Información general y dispositivos asociados a esta ubicación.</p>
+
+<div class="card mb-4">
+  <div class="card-header">
+    Información del Local
+  </div>
+  <div class="card-body">
+    <p><strong>ID:</strong> <%= @local.id %></p>
+    <p><strong>Nombre:</strong> <%= @local.name %></p>
+    <p>
+      <strong>Estado Operacional:</strong>
+      <% if @local.operational_status.present? %>
+        <% status_class = case @local.operational_status.to_sym
+                           when :operative then 'text-success'
+                           when :warning then 'text-warning'
+                           when :trouble, :failing then 'text-danger'
+                           when :in_maintenance then 'text-primary'
+                           else 'text-muted'
+                           end %>
+        <span class="fw-bold <%= status_class %>">
+          <%= @local.operational_status&.humanize %>
+        </span>
+      <% else %>
+        <span class="text-muted">Sin Info.</span>
+      <% end %>
+    </p>
+    <%= link_to 'Locales', locals_dashboard_path, class: "btn btn-secondary mt-3" %>
+  </div>
+</div>
+
+<h2 class="mb-3">Dispositivos en este Local (<%= @devices_in_local.total_count %>)</h2>
+
+<% if @devices_in_local.any? %>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-bordered caption-top">
+      <caption>Dispositivos Actualmente Asignados a <%= @local.name %></caption>
+      <thead class="table-dark">
+        <tr>
+          <th>Nombre</th>
+          <th>UUID</th>
+          <th>Tipo</th>
+          <th>Fabricante</th>
+          <th>Modelo</th>
+          <th>Última Conexión</th>
+          <th>Estado Operacional</th>
+          <th>Firmware Actual</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @devices_in_local.each do |device| %>
+          <tr id="device_<%= device.uuid %>">
+            <td><%= device.name || 'N/A' %></td>
+            <td><%= device.uuid %></td>
+            <td><%= device.device_type&.name || 'Desconocido' %></td>
+            <td><%= device.manufacturer || 'N/A' %></td>
+            <td><%= device.model || 'N/A' %></td>
+            <td><%= device.last_connection_at&.strftime("%Y-%m-%d %H:%M:%S") || 'Nunca' %></td>
+            <td>
+              <% if device.device_update %>
+                <% status_class = case device.device_update.operational_status
+                                   when 'operative' then 'text-success'
+                                   when 'warning' then 'text-warning'
+                                   when 'trouble', 'failing' then 'text-danger'
+                                   when 'in_maintenance' then 'text-primary'
+                                   else 'text-muted'
+                                   end %>
+                <span class="fw-bold <%= status_class %>">
+                  <%= device.device_update.operational_status&.humanize %>
+                </span>
+              <% else %>
+                <span class="text-muted">Sin Info.</span>
+              <% end %>
+            </td>
+            <td><%= device.device_update&.current_firmware_version || 'N/A' %></td>
+            <td><%= link_to 'Ver Detalles', device_dashboard_detail_path(uuid: device.uuid), class: "btn btn-info btn-sm" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-flex justify-content-center mt-4">
+    <%= paginate @devices_in_local, param_name: :device_page, theme: 'bootstrap-5' %>
+  </div>
+
+<% else %>
+  <div class="alert alert-info text-center" role="alert">
+    Este local no tiene dispositivos actualmente asignados.
+  </div>
+<% end %>

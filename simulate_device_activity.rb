@@ -15,7 +15,7 @@ begin
   BASE_API_URL = "http://localhost:3000"
 
   # Intervalo de tiempo máximo entre interacciones por dispositivo (en segundos)
-  MAX_INTERACTION_INTERVAL = 300 # 5 minutos
+  MAX_INTERACTION_INTERVAL = 60 # 1 minuto
 
   # Probabilidad de que una interacción simule un error (0.0 a 1.0)
   ERROR_PROBABILITY = 0.20 # 20% de probabilidad de error

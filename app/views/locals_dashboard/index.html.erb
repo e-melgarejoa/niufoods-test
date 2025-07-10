@@ -1,0 +1,60 @@
+<h1 class="mb-4">Dashboard de Locales</h1>
+<p class="lead">Visión general del estado y los dispositivos asociados a tus ubicaciones.</p>
+
+<div class="mb-4 text-end">
+  <%= link_to 'Ir a Dispositivos', devices_dashboard_path, class: 'btn btn-primary' %>
+</div>
+
+<% if @locales.any? %>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-bordered caption-top">
+      <caption>Lista de Locales (<%= @locales.total_count %> en total)</caption>
+      <thead class="table-dark">
+        <tr>
+          <th>Nombre del Local</th>
+          <th>Estado Operacional</th>
+          <th>Dispositivos Asignados</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @locales.each do |local| %>
+          <tr>
+            <td><%= local.name %></td>
+            <td>
+              <%# Lógica para mostrar el estado operacional del local con colores %>
+              <% if local.operational_status.present? %>
+                <% status_class = case local.operational_status.to_sym
+                                   when :operative then 'text-success'
+                                   when :warning then 'text-warning'
+                                   when :trouble, :failing then 'text-danger'
+                                   when :in_maintenance then 'text-primary'
+                                   else 'text-muted'
+                                   end %>
+                <span class="fw-bold <%= status_class %>">
+                  <%= local.operational_status&.humanize %>
+                </span>
+              <% else %>
+                <span class="text-muted">Sin Info.</span>
+              <% end %>
+            </td>
+            <td>
+              <%# Contar solo los dispositivos actualmente asignados %>
+              <%= local.devices.joins(:local_devices).where(local_devices: { is_current: true }).count %>
+            </td>
+            <td><%= link_to 'Ver Detalles', local_dashboard_detail_path(local), class: "btn btn-info btn-sm" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-flex justify-content-center mt-4">
+    <%= paginate @locales, theme: 'bootstrap-5' %>
+  </div>
+
+<% else %>
+  <div class="alert alert-info text-center" role="alert">
+    No hay locales para mostrar. Por favor, asegúrate de que tu base de datos tiene datos.
+  </div>
+<% end %>

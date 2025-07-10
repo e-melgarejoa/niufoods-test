@@ -24,6 +24,8 @@ services:
     <<: *backend
     ports:
       - 3000:3000/tcp
+    volumes:
+      - bundle_data:/usr/local/bundle
     depends_on:
       - db
 
@@ -55,3 +57,4 @@ volumes:
   bundle_cache:
   postgres:
   redis:
+  bundle_data:

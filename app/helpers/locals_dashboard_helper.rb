@@ -1,0 +1,2 @@
+module LocalsDashboardHelper
+end

@@ -1,0 +1,79 @@
+<%# app/views/devices_dashboard/index.html.erb %>
+
+<h1 class="mb-4">Dashboard de Dispositivos</h1>
+<p class="lead">Visión general del estado y la información clave de tus dispositivos.</p>
+
+<div class="mb-4 text-end">
+  <%= link_to 'Ir a Locales', locals_dashboard_path, class: 'btn btn-primary' %>
+</div>
+
+<% if @devices.any? %>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-bordered caption-top">
+      <caption>Lista de Dispositivos (<%= @devices.total_count %> en total)</caption>
+      <thead class="table-dark">
+        <tr>
+          <th>Nombre</th>
+          <th>UUID</th>
+          <th>Tipo</th>
+          <th>Fabricante</th>
+          <th>Modelo</th>
+          <th>Última Conexión</th>
+          <th>Estado Operacional</th>
+          <th>Firmware Actual</th>
+          <th>Última Sinc.</th>
+          <th>Estado Actualización</th>
+          <th>Último Error</th>
+          <th>Local Asignado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @devices.each do |device| %>
+          <tr>
+            <td><%= device.name || 'N/A' %></td>
+            <td><%= device.uuid %></td>
+            <td><%= device.device_type&.name || 'Desconocido' %></td>
+            <td><%= device.manufacturer || 'N/A' %></td>
+            <td><%= device.model || 'N/A' %></td>
+            <td><%= device.last_connection_at&.strftime("%Y-%m-%d %H:%M:%S") || 'Nunca' %></td>
+            <td>
+              <% if device.device_update %>
+                <% status_class = case device.device_update.operational_status
+                                 when 'operative' then 'text-success'
+                                 when 'warning' then 'text-warning'
+                                 when 'trouble', 'failing' then 'text-danger'
+                                 when 'in_maintenance' then 'text-primary'
+                                 else 'text-muted'
+                                 end %>
+                <span class="fw-bold <%= status_class %>">
+                  <%= device.device_update.operational_status&.humanize %>
+                </span>
+              <% else %>
+                <span class="text-muted">Sin Info.</span>
+              <% end %>
+            </td>
+            <td><%= device.device_update&.current_firmware_version || 'N/A' %></td>
+            <td><%= device.device_update&.last_sync_time&.strftime("%Y-%m-%d %H:%M:%S") || 'Nunca' %></td>
+            <td><%= device.device_update&.last_update_status&.humanize || 'N/A' %></td>
+            <td><%= device.device_update&.last_error_message&.truncate(50) || 'N/A' %></td>
+            <td>
+              <% current_local_device = device.local_devices.find { |ld| ld.is_current } %>
+              <%= current_local_device&.local&.name || 'No Asignado' %>
+            </td>
+            <td><%= link_to 'Ver Detalles', device_dashboard_detail_path(uuid: device.uuid), class: "btn btn-info btn-sm" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-flex justify-content-center mt-4">
+    <%= paginate @devices, theme: 'bootstrap-5' %>
+  </div>
+
+<% else %>
+  <div class="alert alert-info text-center" role="alert">
+    No hay dispositivos para mostrar. Por favor, asegúrate de que tu base de datos tiene datos o ejecuta tu script de simulación.
+  </div>
+<% end %>
