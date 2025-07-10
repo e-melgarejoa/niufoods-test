@@ -16,15 +16,15 @@ Todo el entorno se ejecuta en contenedores Docker para asegurar portabilidad y f
 
 ```mermaid
 flowchart TD
-    subgraph Simulador de Dispositivos
-        D1[Dispositivo 1]
-        D2[Dispositivo 2]
-        Dn[Dispositivo N]
+    subgraph "Simulador de Dispositivos"
+        D1["Dispositivo 1"]
+        D2["Dispositivo 2"]
+        Dn["Dispositivo N"]
     end
-    D1 -- POST estado --> API[API Central (Rails)]
-    D2 -- POST estado --> API
-    Dn -- POST estado --> API
-    API -- Consulta estados --> Cliente[Cliente Web / CLI]
+    D1 -- "POST estado" --> API["API Central (Rails)"]
+    D2 -- "POST estado" --> API
+    Dn -- "POST estado" --> API
+    API -- "Consulta estados" --> Cliente["Cliente Web / CLI"]
 ```
 
 - Cada dispositivo simulado genera eventos de estado y los envía mediante peticiones HTTP a la API central.
