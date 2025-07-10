@@ -7,8 +7,6 @@ Este proyecto simula un sistema de monitoreo de dispositivos distribuidos en dif
 - **Backend (API central):** Aplicación Rails que expone endpoints para recibir y consultar el estado de los dispositivos.
 - **Simulador de Dispositivos:** Script que emula la actividad y los estados de los dispositivos, enviando datos periódicamente a la API.
 
-Todo el entorno se ejecuta en contenedores Docker para asegurar portabilidad y facilidad de despliegue.
-
 ---
 
 ## Modelo de Base de Datos
@@ -215,10 +213,6 @@ Puedes omitir `--build` si no hubo cambios recientes, y `-d` si prefieres ver lo
 
 - **Variables y configuración:** Los archivos de configuración y variables incluidos son solo para facilitar la revisión. **No** los uses en proyectos reales o entornos productivos.
 - **Persistencia:** Los datos se almacenan en la base de datos definida en el entorno Docker.
-- **Lógica de precedencia:** El estado global de un local se determina por el estado más severo de sus dispositivos:
-    - Si algún dispositivo está en `failing`, el local está en `failing`.
-    - Si no hay `failing` pero sí `trouble`, el local está en `trouble`.
-    - Solo si todos los dispositivos están en `operative`, `in_maintenance` o `unknown`, el local se considera `operative`.
 - **Errores:** Si la API recibe datos inválidos, responde con un error y no almacena la información.
 - **Portabilidad:** Todo el entorno está preparado para ejecutarse en cualquier máquina con Docker.
 
