@@ -175,7 +175,13 @@ flowchart TD
      ```
      Esto levantará la API central y los servicios necesarios.
 
-4. **Ejecutar la simulación de dispositivos**
+4. **Ejecutar el seed de la base de datos (solo una vez)**
+     ```sh
+     docker-compose run --rm backend rails db:seed
+     ```
+     Este comando carga los datos iniciales necesarios para el funcionamiento del sistema. **Debe ejecutarse una sola vez**, después de levantar los servicios y antes de simular la actividad de los dispositivos.
+
+5. **Ejecutar la simulación de dispositivos**
      ```sh
      docker-compose run --rm backend bundle exec rails runner simulate_device_activity.rb
      ```
