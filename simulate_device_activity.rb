@@ -11,8 +11,7 @@ end
 begin
   puts "--- Iniciando Simulación de Actividad de Dispositivos ---"
 
-  # URL base de tu API de Rails (ajusta si es necesario)
-  BASE_API_URL = "http://localhost:3000"
+  BASE_API_URL = "http://backend:3000" 
 
   # Intervalo de tiempo máximo entre interacciones por dispositivo (en segundos)
   MAX_INTERACTION_INTERVAL = 60 # 1 minuto

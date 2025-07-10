@@ -18,10 +18,12 @@ class Local < ApplicationRecord
  
   def update_operational_status!
     # Obtiene todos los estados operativos de los dispositivos activos asociados a este local
-    device_statuses = devices.joins(:device_update)
+     device_statuses = devices.joins(:local_devices)
+                             .where(local_devices: { is_current: true, local_id: self.id })
+                             .joins(:device_update)
                              .pluck('device_updates.operational_status')
-                             .map { |s| DeviceUpdate.operational_statuses.key(s) } 
-
+                             .map(&:to_sym)
+ 
     # Lógica para determinar el estado general del local
     new_status = if device_statuses.empty?
                    :unknown # O un estado por defecto si no hay dispositivos

@@ -29,6 +29,10 @@ module NiufoodsTest
     config.autoload_lib(ignore: %w[assets tasks])
     
     config.active_job.queue_adapter = :sidekiq
+    config.hosts << "backend" 
+    config.hosts << "backend:3000" 
+    config.hosts << "localhost"
+    config.hosts << "127.0.0.1"
 
     # Configuration for the application, engines, and railties goes here.
     #

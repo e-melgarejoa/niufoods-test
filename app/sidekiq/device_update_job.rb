@@ -1,9 +1,8 @@
 class DeviceUpdateJob
   include Sidekiq::Job
-  sidekiq_options retry: 3, queue: 'device_updates' # 'device_updates' es la cola que definimos en sidekiq.yml
+  sidekiq_options retry: 3, queue: 'device_updates'
 
   def perform(device_api_request_id)
-    # Recuperar el registro DeviceApiRequest
     device_api_request = DeviceApiRequest.find_by(id: device_api_request_id)
 
     unless device_api_request
@@ -41,6 +40,8 @@ class DeviceUpdateJob
       #   "sync_time": "2025-07-08T23:00:00Z"
       # }
       payload = device_api_request.request_payload
+      puts "Processing payload: #{payload.inspect}"
+      puts payload['operational_status']
 
       reported_firmware = payload['firmware_version']
       reported_operational_status_str = payload['operational_status'] # Estado operativo reportado por el dispositivo (string)

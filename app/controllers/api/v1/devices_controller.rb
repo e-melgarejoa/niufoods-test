@@ -1,4 +1,3 @@
-# app/controllers/api/v1/devices_controller.rb
 module Api
   module V1
     class DevicesController < ActionController::API
@@ -100,17 +99,17 @@ module Api
       def update_status_params
         params.permit(
           :device_uuid,
-          data: [ # `data` es un hash anidado
+          :invalid_data_key,
+          data: [
             :firmware_version, :battery_level, :temperature, :uptime_hours, :operational_status, :sync_time,
-            # Campos específicos de tipos de dispositivo
             :screen_brightness, :disk_usage_percent,
             :humidity, :ambient_light,
             :transactions_today, :last_transaction_value,
             :current_content_id, :playlist_version,
             :paper_level_percent, :toner_level_percent, :pages_printed_since_last_service,
-            # Campo para simular errores en el worker (si tu worker lo interpreta)
             :force_server_error
-          ]
+          ],
+          device: {}
         )
       end
 
