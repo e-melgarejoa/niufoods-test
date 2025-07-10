@@ -33,18 +33,16 @@ flowchart TD
 
 ---
 
-## Flujo de Lógica: Envío y Procesamiento de Datos
-
 ```mermaid
-API -- "Encola job" --> Sidekiq["Sidekiq (Job Worker)"]
-Sidekiq -- "Procesa y guarda estado" --> D
+flowchart TD
     A[Dispositivo simulado genera estado] --> B[Envía POST a API central]
     B --> C{¿POST recibido correctamente?}
-    C -- Sí --> D[API valida y almacena el estado]
-    D --> E[Actualiza estado del local según precedencia]
-    E --> F[Disponible para consulta por cliente]
-    C -- No --> G[API responde con error]
-    G --> H[Dispositivo puede reintentar envío o registrar error]
+    C -- Sí --> D[API encola job en Sidekiq]
+    D --> E[Sidekiq procesa y guarda estado]
+    E --> F[Actualiza estado del local según precedencia]
+    F --> G[Disponible para consulta por cliente]
+    C -- No --> H[API responde con error]
+    H --> I[Dispositivo puede reintentar envío o registrar error]
 ```
 
 - Los dispositivos simulan cambios de estado y envían los datos a la API.
